@@ -126,4 +126,22 @@ export class DocumentService {
 
     return doc;
   }
+
+  async removeFromProcess(processId: string, documentId: string) {
+  const doc = await this.repo.findOne({
+    where: {
+      id: documentId,
+      processId,
+    },
+  });
+
+  if (!doc) {
+    throw new NotFoundException('Document not found for this process');
+  }
+
+  await this.storage.deleteFile(doc.storageKey);
+  await this.repo.remove(doc);
+
+  return { deleted: true };
+}
 }

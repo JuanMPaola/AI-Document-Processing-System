@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { Process, ProcessStatus } from './entities/process.entity';
 import { DocumentService } from '../document/document.service';
 import { AnalysisService } from '../analysis/analysis.service';
+import { DocumentStatus } from '../document/entities/document.entity';
 
 @Injectable()
 export class ProcessService {
@@ -58,30 +59,15 @@ export class ProcessService {
     return this.updateStatus(id, ProcessStatus.COMPLETED);
   }
 
-  //-------------------------------------
-  //      DOCUMENT SERVICE LOGIC
-  //-------------------------------------
-
   async uploadFiles(id: string, files: Express.Multer.File[]) {
     await this.findOne(id);
     return this.documentService.uploadMany(id, files);
   }
 
   async removeDocument(id: string, documentId: string) {
-    const process = await this.findOne(id);
-
-    const document = process.documents?.find((doc) => doc.id === documentId);
-
-    if (!document) {
-      throw new NotFoundException('Document not found for this process');
-    }
-
-    return this.documentService.remove(documentId);
+    await this.findOne(id);
+    return this.documentService.removeFromProcess(id, documentId);
   }
-  
-  //-------------------------------------
-  //      ANALYSIS SERVICE LOGIC
-  //-------------------------------------
 
   async start(id: string) {
     await this.findOne(id);
@@ -106,15 +92,23 @@ export class ProcessService {
   async getStatus(id: string) {
     const process = await this.findOne(id);
 
-    const totalFiles = process.documents?.length ?? 0;
+    const documents = process.documents ?? [];
+
+    const totalFiles = documents.length;
+    const processedFiles = documents.filter(
+      (doc) => doc.status === DocumentStatus.DONE,
+    ).length;
+
+    const percentage =
+      totalFiles === 0 ? 0 : Math.round((processedFiles / totalFiles) * 100);
 
     return {
       process_id: process.id,
       status: process.status,
       progress: {
         total_files: totalFiles,
-        processed_files: 0,
-        percentage: 0,
+        processed_files: processedFiles,
+        percentage,
       },
       started_at: process.createdAt,
       estimated_completion: null,

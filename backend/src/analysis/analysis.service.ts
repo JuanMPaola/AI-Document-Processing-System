@@ -11,10 +11,9 @@ import { AnalysisResult } from './entities/analysis-result.entity';
 import { DocumentService } from '../document/document.service';
 import { TextExtractionService } from '../text-extraction/text-extraction.service';
 import { AiService } from '../ai/ai.service';
-
 import { ProcessGateway } from '../realtime/process.gateway';
-
 import { ProducerService } from '../queue/producer.service';
+import { DocumentStatus } from '../document/entities/document.entity';
 
 @Injectable()
 export class AnalysisService {
@@ -28,7 +27,6 @@ export class AnalysisService {
         private readonly documentService: DocumentService,
         private readonly textExtractionService: TextExtractionService,
         private readonly aiService: AiService,
-
         private readonly processGateway: ProcessGateway,
         private readonly producerService: ProducerService,
     ) { }
@@ -64,8 +62,40 @@ export class AnalysisService {
             );
         }
 
+        process.status = ProcessStatus.PENDING;
+        await this.processRepo.save(process);
+
+        await this.producerService.enqueueProcessAnalysis(processId);
+
+        this.processGateway.emitProcessQueued(processId);
+
+        return {
+            processId,
+            status: process.status,
+            message: 'Process queued successfully',
+        };
+    }
+
+    async executeAnalysis(processId: string) {
+        const process = await this.processRepo.findOne({
+            where: { id: processId },
+        });
+
+        if (!process) {
+            throw new NotFoundException('Process not found');
+        }
+
+        const documents = await this.documentService.findByProcess(processId);
+
+        if (!documents.length) {
+            throw new BadRequestException(
+                'Cannot execute a process without uploaded documents',
+            );
+        }
+
         const existingResults = await this.analysisRepo.find({
             where: { processId },
+            order: { createdAt: 'ASC' },
         });
 
         const processedDocumentIds = new Set(
@@ -125,6 +155,8 @@ export class AnalysisService {
                 );
 
                 try {
+                    await this.documentService.markAsProcessing(doc.id);
+
                     const text = await this.textExtractionService.extractFromDocument(
                         doc.storageKey,
                         doc.mimeType,
@@ -170,6 +202,8 @@ export class AnalysisService {
 
                     const savedResult = await this.analysisRepo.save(result);
                     results.push(savedResult);
+
+                    await this.documentService.markAsDone(doc.id);
 
                     this.processGateway.emitDocumentCompleted(
                         processId,
@@ -312,6 +346,7 @@ export class AnalysisService {
     async getResults(processId: string) {
         const process = await this.processRepo.findOne({
             where: { id: processId },
+            relations: ['documents'],
         });
 
         if (!process) {
@@ -323,10 +358,76 @@ export class AnalysisService {
             order: { createdAt: 'ASC' },
         });
 
+        const documents = process.documents ?? [];
+
+        const totalFiles = documents.length;
+        const filesProcessed = documents
+            .filter((doc) => doc.status === DocumentStatus.DONE)
+            .map((doc) => doc.originalName);
+
+        const processedFiles = filesProcessed.length;
+
+        const percentage =
+            totalFiles === 0 ? 0 : Math.round((processedFiles / totalFiles) * 100);
+
+        const totalWords = results.reduce(
+            (sum, result) => sum + Number(result.totalWords ?? 0),
+            0,
+        );
+
+        const totalLines = results.reduce(
+            (sum, result) => sum + Number(result.totalLines ?? 0),
+            0,
+        );
+
+        const aggregatedFrequency = new Map<string, number>();
+
+        for (const result of results) {
+            for (const item of result.mostFrequentWords ?? []) {
+                aggregatedFrequency.set(
+                    item.word,
+                    (aggregatedFrequency.get(item.word) ?? 0) + item.count,
+                );
+            }
+        }
+
+        const mostFrequentWords = [...aggregatedFrequency.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([word]) => word);
+
+        const documentDetails = documents.map((doc) => {
+            const docResult = results.find((result) => result.documentId === doc.id);
+
+            return {
+                document_id: doc.id,
+                file_name: doc.originalName,
+                status: doc.status,
+                total_words: Number(docResult?.totalWords ?? 0),
+                total_lines: Number(docResult?.totalLines ?? 0),
+                total_characters: Number(docResult?.totalCharacters ?? 0),
+                most_frequent_words: docResult?.mostFrequentWords ?? [],
+                summary: docResult?.summary ?? null,
+            };
+        });
+
         return {
-            processId,
+            process_id: process.id,
             status: process.status,
-            results,
+            progress: {
+                total_files: totalFiles,
+                processed_files: processedFiles,
+                percentage,
+            },
+            started_at: process.createdAt,
+            estimated_completion: null,
+            results: {
+                total_words: totalWords,
+                total_lines: totalLines,
+                most_frequent_words: mostFrequentWords,
+                files_processed: filesProcessed,
+            },
+            documents: documentDetails,
         };
     }
 }

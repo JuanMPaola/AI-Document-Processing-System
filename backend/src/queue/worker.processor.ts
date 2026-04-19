@@ -37,7 +37,7 @@ export class WorkerProcessor implements OnModuleInit, OnModuleDestroy {
 
           this.logger.log(`Processing analysis for process ${processId}`);
 
-          return analysisService.start(processId);
+          await analysisService.executeAnalysis(processId);
         }
       },
       {
