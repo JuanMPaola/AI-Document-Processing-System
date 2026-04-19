@@ -73,6 +73,8 @@ export default function HomePage() {
           onClose={createFlow.close}
           onUpload={createFlow.upload}
           onStart={handleStartAnalysis}
+          onRemoveSelectedFile={createFlow.removeSelectedFile}
+          onRemoveUploadedDocument={createFlow.removeUploadedDocument}
         />
       </div>
     </div>

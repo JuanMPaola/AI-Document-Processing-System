@@ -13,6 +13,8 @@ interface Props {
   onClose: () => void;
   onUpload: () => void;
   onStart: () => void;
+  onRemoveUploadedDocument: (documentId: string) => void;
+  onRemoveSelectedFile: (fileName: string) => void;
 }
 
 export default function CreateProcessModal({
@@ -27,6 +29,8 @@ export default function CreateProcessModal({
   onClose,
   onUpload,
   onStart,
+  onRemoveSelectedFile,
+  onRemoveUploadedDocument,
 }: Props) {
   if (!isOpen) return null;
 
@@ -93,9 +97,22 @@ export default function CreateProcessModal({
               <h3 className="mb-2 text-sm font-semibold text-slate-900">
                 Selected files
               </h3>
-              <ul className="space-y-1 text-sm text-slate-600">
+              <ul className="space-y-2 text-sm text-slate-600">
                 {files.map((file) => (
-                  <li key={file.name + file.size}>{file.name}</li>
+                  <li
+                    key={file.name + file.size}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2"
+                  >
+                    <span>{file.name}</span>
+
+                    <button
+                      onClick={() => onRemoveSelectedFile(file.name)}
+                      disabled={loading}
+                      className="rounded-lg bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Remove
+                    </button>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -106,9 +123,22 @@ export default function CreateProcessModal({
               <h3 className="mb-2 text-sm font-semibold text-emerald-800">
                 Uploaded files
               </h3>
-              <ul className="space-y-1 text-sm text-emerald-700">
+              <ul className="space-y-2 text-sm text-emerald-700">
                 {uploadedDocuments.map((doc) => (
-                  <li key={doc.id}>{doc.originalName}</li>
+                  <li
+                    key={doc.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-white px-3 py-2"
+                  >
+                    <span>{doc.originalName}</span>
+
+                    <button
+                      onClick={() => onRemoveUploadedDocument(doc.id)}
+                      disabled={loading}
+                      className="rounded-lg bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Remove
+                    </button>
+                  </li>
                 ))}
               </ul>
             </div>

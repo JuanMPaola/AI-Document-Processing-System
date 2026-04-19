@@ -10,6 +10,7 @@ import { TextExtractionModule } from '../text-extraction/text-extraction.module'
 import { DocumentModule } from '../document/document.module';
 import { AiModule } from '../ai/ai.module';
 import { AnalysisModule } from '../analysis/analysis.module';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { AnalysisModule } from '../analysis/analysis.module';
     TextExtractionModule,
     DocumentModule,
     AiModule,
-    AnalysisModule
+    AnalysisModule,
+    StorageModule
   ],
   controllers: [ProcessController],
   providers: [ProcessService],

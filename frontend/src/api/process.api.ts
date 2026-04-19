@@ -36,3 +36,11 @@ export async function getProcessStatus(
   const res = await fetch(`${API_URL}/process/${processId}/status`);
   return handleResponse<ProcessStatusResponse>(res);
 }
+
+export async function deleteProcess(processId: string) {
+  const res = await fetch(`${API_URL}/process/${processId}`, {
+    method: 'DELETE',
+  });
+
+  return handleResponse<{ deleted: true }>(res);
+}

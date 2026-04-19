@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { startAnalysis } from '../api/analysis.api';
-import { uploadFilesToProcess } from '../api/document.api';
+import {
+  deleteDocumentFromProcess,
+  uploadFilesToProcess,
+} from '../api/document.api';
 import { createProcess } from '../api/process.api';
 import type { DocumentItem, ProcessItem } from '../types/process.types';
+import { deleteProcess } from '../api/process.api';
 
 type Step = 'idle' | 'created' | 'uploaded' | 'starting';
 
@@ -34,7 +38,15 @@ export function useCreateProcessFlow() {
     }
   };
 
-  const close = () => {
+  const close = async () => {
+    try {
+      if (process && uploadedDocuments.length === 0) {
+        await deleteProcess(process.id);
+      }
+    } catch {
+      // opcional
+    }
+
     setIsOpen(false);
     setProcess(null);
     setFiles([]);
@@ -66,6 +78,33 @@ export function useCreateProcessFlow() {
     }
   };
 
+  const removeUploadedDocument = async (documentId: string) => {
+    if (!process) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      await deleteDocumentFromProcess(process.id, documentId);
+
+      const nextDocuments = uploadedDocuments.filter(
+        (doc) => doc.id !== documentId,
+      );
+
+      setUploadedDocuments(nextDocuments);
+
+      if (nextDocuments.length === 0) {
+        setStep('created');
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to delete document',
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const start = async () => {
     if (!process) return null;
 
@@ -86,6 +125,10 @@ export function useCreateProcessFlow() {
     }
   };
 
+  const removeSelectedFile = (fileName: string) => {
+    setFiles((prev) => prev.filter((file) => file.name !== fileName));
+  };
+
   return {
     isOpen,
     process,
@@ -98,6 +141,8 @@ export function useCreateProcessFlow() {
     open,
     close,
     upload,
+    removeSelectedFile,
+    removeUploadedDocument,
     start,
   };
 }

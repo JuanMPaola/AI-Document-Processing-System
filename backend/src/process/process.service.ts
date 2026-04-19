@@ -6,6 +6,7 @@ import { Process, ProcessStatus } from './entities/process.entity';
 import { DocumentService } from '../document/document.service';
 import { AnalysisService } from '../analysis/analysis.service';
 import { DocumentStatus } from '../document/entities/document.entity';
+import { StorageService } from '../storage/storage.service';
 
 @Injectable()
 export class ProcessService {
@@ -14,7 +15,8 @@ export class ProcessService {
     private readonly repo: Repository<Process>,
     private readonly documentService: DocumentService,
     private readonly analysisService: AnalysisService,
-  ) {}
+    private readonly storage: StorageService,
+  ) { }
 
   async create() {
     const process = this.repo.create({
@@ -26,6 +28,7 @@ export class ProcessService {
 
   async findAll() {
     return await this.repo.find({
+      relations: ['documents'],
       order: {
         createdAt: 'DESC',
       },
@@ -43,6 +46,26 @@ export class ProcessService {
     }
 
     return process;
+  }
+
+  async remove(id: string) {
+    const process = await this.repo.findOne({
+      where: { id },
+      relations: ['documents'],
+    });
+
+    if (!process) {
+      throw new NotFoundException('Process not found');
+    }
+
+    // borrar archivos en storage
+    for (const doc of process.documents ?? []) {
+      await this.storage.deleteFile(doc.storageKey).catch(() => null);
+    }
+
+    await this.repo.remove(process);
+
+    return { deleted: true };
   }
 
   async updateStatus(id: string, status: ProcessStatus) {

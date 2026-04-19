@@ -39,3 +39,17 @@ export async function uploadFilesToProcess(
     }[];
   }>(res);
 }
+
+export async function deleteDocumentFromProcess(
+  processId: string,
+  documentId: string,
+) {
+  const res = await fetch(
+    `${API_URL}/process/${processId}/files/${documentId}`,
+    {
+      method: 'DELETE',
+    },
+  );
+
+  return handleResponse<{ deleted: true }>(res);
+}
