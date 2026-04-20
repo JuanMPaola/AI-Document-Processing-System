@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { OllamaProvider } from './provider/ollama.provider';
+import { Inject, Injectable } from '@nestjs/common';
+import type { AiProvider } from './interfaces/ai-provider.interface';
 
 @Injectable()
 export class AiService {
-  constructor(private readonly ollamaProvider: OllamaProvider) {}
+  constructor(@Inject('AI_PROVIDER') private readonly provider: AiProvider) { }
 
   async summarize(text: string): Promise<string> {
-    return this.ollamaProvider.summarize(text);
+    return this.provider.summarize(text);
   }
 }
