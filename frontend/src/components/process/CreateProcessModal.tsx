@@ -81,6 +81,7 @@ export default function CreateProcessModal({
               <input
                 type="file"
                 multiple
+                accept=".pdf,.txt,.docx,.png,.jpg,.jpeg,.webp,.bmp,.tiff,.xlsx,.xls"
                 onChange={(e) => setFiles(Array.from(e.target.files || []))}
                 className="hidden"
               />

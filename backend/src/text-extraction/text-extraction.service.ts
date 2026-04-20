@@ -18,7 +18,7 @@ export class TextExtractionService {
       new PdfExtractor(),
       new TxtExtractor(),
       new DocxExtractor(),
-     // new XlsxExtractor(),
+      new XlsxExtractor(),
       new ImageOcrExtractor(),
     ];
   }

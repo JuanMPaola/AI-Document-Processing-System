@@ -1,8 +1,8 @@
 import { TextExtractor } from '../interfaces/text-extractor.interface';
-import * as ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 
-export class XlsxExtractor /* implements TextExtractor  */{
- /*  supports(mimeType: string): boolean {
+export class XlsxExtractor implements TextExtractor {
+  supports(mimeType: string): boolean {
     return (
       mimeType ===
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
@@ -10,44 +10,18 @@ export class XlsxExtractor /* implements TextExtractor  */{
     );
   }
 
-  async extract(buffer: Buffer): Promise<string> {
-    const workbook = new ExcelJS.Workbook();
-
-    await workbook.xlsx.load(buffer as unknown as Buffer);
-
+ async extract(buffer: Buffer): Promise<string> {
+    const workbook = XLSX.read(buffer);
     const parts: string[] = [];
 
-    workbook.worksheets.forEach((sheet) => {
-      parts.push(`Sheet: ${sheet.name}`);
-
-      sheet.eachRow((row) => {
-        const values = row.values;
-
-        if (Array.isArray(values)) {
-          const rowText = values
-            .slice(1)
-            .map((cell) => {
-              if (cell === null || cell === undefined) return '';
-              if (typeof cell === 'object') {
-                if ('text' in cell && typeof cell.text === 'string') {
-                  return cell.text;
-                }
-                return JSON.stringify(cell);
-              }
-              return String(cell);
-            })
-            .filter((value) => value.trim().length > 0)
-            .join(' | ');
-
-          if (rowText) {
-            parts.push(rowText);
-          }
-        }
-      });
-
-      parts.push('');
+    workbook.SheetNames.forEach((name) => {
+        parts.push(`Sheet: ${name}`);
+        const sheet = workbook.Sheets[name];
+        const csv = XLSX.utils.sheet_to_csv(sheet);
+        parts.push(csv);
+        parts.push('');
     });
 
     return parts.join('\n').trim();
-  } */
+}
 }
