@@ -97,7 +97,7 @@ export default function CreateProcessModal({
               <h3 className="mb-2 text-sm font-semibold text-slate-900">
                 Selected files
               </h3>
-              <ul className="space-y-2 text-sm text-slate-600">
+              <ul className="max-h-24 overflow-y-auto space-y-2 text-sm text-slate-600">
                 {files.map((file) => (
                   <li
                     key={file.name + file.size}
@@ -123,7 +123,7 @@ export default function CreateProcessModal({
               <h3 className="mb-2 text-sm font-semibold text-emerald-800">
                 Uploaded files
               </h3>
-              <ul className="space-y-2 text-sm text-emerald-700">
+              <ul className="max-h-24 overflow-y-auto space-y-2 text-sm text-emerald-700">
                 {uploadedDocuments.map((doc) => (
                   <li
                     key={doc.id}

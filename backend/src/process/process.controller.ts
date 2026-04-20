@@ -23,7 +23,7 @@ import { ProcessService } from './process.service';
 export class ProcessController {
   constructor(
     private readonly processService: ProcessService,
-  ) {}
+  ) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new process' })
@@ -62,6 +62,24 @@ export class ProcessController {
   })
   findOne(@Param('id') id: string) {
     return this.processService.findOne(id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a process' })
+  @ApiParam({
+    name: 'id',
+    description: 'Process ID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Process deleted successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Process not found',
+  })
+  remove(@Param('id') id: string) {
+    return this.processService.remove(id);
   }
 
   @Post(':id/files')
@@ -130,6 +148,8 @@ export class ProcessController {
   ) {
     return this.processService.removeDocument(id, documentId);
   }
+
+
 
   @Post(':id/start')
   @ApiOperation({
