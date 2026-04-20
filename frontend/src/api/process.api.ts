@@ -1,7 +1,7 @@
 import type { ProcessItem } from '../types/process.types';
 import type { ProcessStatusResponse } from '../types/analysis.types';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
