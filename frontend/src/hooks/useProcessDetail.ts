@@ -4,7 +4,6 @@ import { getProcessById, getProcessStatus } from '../api/process.api';
 import type {
   AnalysisAggregateResults,
   AnalysisDocumentResult,
-  AnalysisResultsResponse,
   ProcessStatusResponse,
 } from '../types/analysis.types';
 import type { ProcessItem } from '../types/process.types';

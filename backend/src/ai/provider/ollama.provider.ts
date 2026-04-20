@@ -3,8 +3,8 @@ import { AiProvider } from '../interfaces/ai-provider.interface';
 
 @Injectable()
 export class OllamaProvider implements AiProvider {
-  private readonly baseUrl = 'http://localhost:11434';
-  private readonly model = 'phi3:latest';
+  private readonly baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+  private readonly model = 'qwen2:0.5b';
 
   async summarize(text: string): Promise<string> {
     const prompt = `

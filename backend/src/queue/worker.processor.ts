@@ -18,10 +18,11 @@ export class WorkerProcessor implements OnModuleInit, OnModuleDestroy {
 
   constructor(private readonly moduleRef: ModuleRef) {
     this.connection = new IORedis({
-      host: '127.0.0.1',
-      port: 6379,
+      host: process.env.REDIS_HOST || '127.0.0.1',
+      port: Number(process.env.REDIS_PORT || 6379),
       maxRetriesPerRequest: null,
     });
+     console.log('OLLAMA_BASE_URL:', process.env.OLLAMA_BASE_URL);
   }
 
   onModuleInit() {
