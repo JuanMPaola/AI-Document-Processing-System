@@ -31,10 +31,6 @@
     "@nestjs/websockets": "^11.1.19",
     "bullmq": "^5.74.1",
     "dotenv": "^17.4.2",
-<<<<<<< HEAD
-    "exceljs": "^4.4.0",
-=======
->>>>>>> main
     "groq-sdk": "^1.1.2",
     "ioredis": "^5.10.1",
     "mammoth": "^1.12.0",
