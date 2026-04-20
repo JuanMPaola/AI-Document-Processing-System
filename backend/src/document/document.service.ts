@@ -19,6 +19,26 @@ export class DocumentService {
   ) { }
 
   async upload(processId: string, file: Express.Multer.File) {
+    const allowedMimeTypes = [
+      'application/pdf',
+      'text/plain',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'image/png',
+      'image/jpeg',
+      'image/jpg',
+      'image/webp',
+      'image/bmp',
+      'image/tiff',
+    ];
+
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `Unsupported file type: ${file.mimetype}`,
+      );
+    }
+
     const process = await this.processRepo.findOne({
       where: { id: processId },
     });
@@ -128,20 +148,20 @@ export class DocumentService {
   }
 
   async removeFromProcess(processId: string, documentId: string) {
-  const doc = await this.repo.findOne({
-    where: {
-      id: documentId,
-      processId,
-    },
-  });
+    const doc = await this.repo.findOne({
+      where: {
+        id: documentId,
+        processId,
+      },
+    });
 
-  if (!doc) {
-    throw new NotFoundException('Document not found for this process');
+    if (!doc) {
+      throw new NotFoundException('Document not found for this process');
+    }
+
+    await this.storage.deleteFile(doc.storageKey);
+    await this.repo.remove(doc);
+
+    return { deleted: true };
   }
-
-  await this.storage.deleteFile(doc.storageKey);
-  await this.repo.remove(doc);
-
-  return { deleted: true };
-}
 }

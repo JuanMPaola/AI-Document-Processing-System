@@ -6,6 +6,7 @@ import Groq from 'groq-sdk';
 export class GroqProvider implements AiProvider {
   private readonly client: Groq;
   private readonly model = 'llama-3.1-8b-instant';
+  private readonly maxRetries = 3;
 
   constructor() {
     this.client = new Groq({
@@ -14,12 +15,16 @@ export class GroqProvider implements AiProvider {
   }
 
   async summarize(text: string): Promise<string> {
-    const response = await this.client.chat.completions.create({
-      model: this.model,
-      messages: [
-        {
-          role: 'user',
-          content: `You are a document analysis assistant.
+    let attempt = 0;
+
+    while (attempt < this.maxRetries) {
+      try {
+        const response = await this.client.chat.completions.create({
+          model: this.model,
+          messages: [
+            {
+              role: 'user',
+              content: `You are a document analysis assistant.
 
 Summarize the following document in a concise way.
 Return plain text only.
@@ -27,16 +32,44 @@ If the text is noisy, incomplete, or unclear, mention that briefly.
 
 DOCUMENT:
 ${text}`,
-        },
-      ],
-    });
+            },
+          ],
+        });
 
-    const result = response.choices[0]?.message?.content?.trim();
+        const result = response.choices[0]?.message?.content?.trim();
 
-    if (!result) {
-      throw new InternalServerErrorException('Groq returned an empty response');
+        if (!result) {
+          throw new InternalServerErrorException('Groq returned an empty response');
+        }
+
+        return result;
+
+      } catch (error: any) {
+        const is429 =
+          error?.status === 429 ||
+          error?.message?.includes('rate_limit_exceeded');
+
+        if (is429 && attempt < this.maxRetries - 1) {
+          const waitSeconds =
+            this.parseWaitTime(error?.message) ?? 10 * (attempt + 1);
+          await new Promise((resolve) =>
+            setTimeout(resolve, waitSeconds * 1000),
+          );
+          attempt++;
+          continue;
+        }
+
+        throw new InternalServerErrorException(
+          error?.message ?? 'Groq request failed',
+        );
+      }
     }
 
-    return result;
+    throw new InternalServerErrorException('Groq max retries exceeded');
+  }
+
+  private parseWaitTime(message: string): number | null {
+    const match = message?.match(/try again in (\d+(\.\d+)?)s/);
+    return match ? Math.ceil(parseFloat(match[1])) + 1 : null;
   }
 }
