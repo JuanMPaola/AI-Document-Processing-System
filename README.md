@@ -131,7 +131,7 @@ Pause and resume sound simple but are tricky in an async batch system. A pause s
 
 The system is built around separation of concerns and SOLID principles. Each module owns a single responsibility: `process` manages lifecycle, `document` handles uploads, `text-extraction` parses file content, `analysis` orchestrates the pipeline, `queue` handles async processing, `realtime` emits live events, and `ai` abstracts summarization.
 
-**Design patterns used:**
+#### Design patterns used:
 
 - **Strategy** — the AI module defines an `AiProvider` interface with interchangeable implementations (`GroqProvider`, `OllamaProvider`). Switching providers requires only a change in the environment variable.
 - **Factory** — `aiProviderFactory` in `AiModule` decides which provider to instantiate at runtime based on `AI_PROVIDER`.
@@ -155,19 +155,6 @@ The production version of this project is deployed on [Railway](https://railway.
 
 Ollama is not part of the production stack. AI summarization is handled by the Groq API, which is faster and does not require running a heavy model in a container. The switch between Ollama and Groq is controlled by the `AI_PROVIDER` environment variable, so the local setup still supports Ollama if preferred.
 
-If you prefer to run a local AI model instead of using the Groq API, you can set up Ollama manually:
-
-```bash
-docker run -d --name ollama -p 11434:11434 -v ollama_data:/root/.ollama ollama/ollama
-docker exec -it ollama ollama pull qwen2:0.5b
-```
-
-Then update your `.env`:
-
-```dotenv
-AI_PROVIDER=ollama
-OLLAMA_BASE_URL=http://localhost:11434
-```
 ## Optional: Using Ollama locally instead of Groq
 
 If you prefer to run a local AI model instead of using the Groq API, you can set up Ollama manually:
@@ -183,3 +170,29 @@ Then update your `.env`:
 AI_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434
 ```
+
+## AI Usage Transparency
+
+### Tools Used
+- ChatGPT (OpenAI, web)
+- Claude (Anthropic, web)
+
+### How AI Was Used
+AI tools were used as development assistants for:
+
+- debugging and implementation support
+- frontend structure and UI refinement
+- architectural validation
+- configuration of external services (Docker, Redis, Ollama, storage providers)
+
+Claude was mainly used for troubleshooting and configuring external integrations.
+
+### Code Usage
+- AI assisted with small components, utilities, and configuration examples
+- core system logic and architecture were implemented manually
+
+### Modifications
+All AI-assisted code was reviewed, adapted, and refactored to fit the project structure and standards.
+
+### Justification
+AI tools were used to accelerate development and reduce debugging time, while maintaining full control over design decisions and implementation.
